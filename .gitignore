@@ -17,6 +17,9 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Private files
+Settings.lua
+
 # =========================
 # Operating System Files
 # =========================
