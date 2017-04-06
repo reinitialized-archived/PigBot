@@ -1,102 +1,91 @@
 --[[
-	LuaSignal LuaSignal.new()
-	bool LuaSignal.IsLuaSignal( Variant testValue )
-	bool LuaSignal.IsLuaConnection( Variant testValue )
 
-	LuaConnection [LuaSignal]:connect( function fn )
-	void [LuaSignal]:disconnect( LuaConnection cn )
-	Tuple [LuaSignal]:wait()
-	void [LuaSignal]:fire( Tuple arguments )
+    PigBot Services
+  RobloxLibraries/LuaSignals ver 0.1.0
+  Handles
 
-	void [LuaConnection]:disconnect()
-	bool [LuaConnection].connected
---]]
+  Change Log:
+    [452017a]
+      - Initial publication
 
--- Require Dependancies
-local Scheduler = require("./Scheduler.lua")
 
-local LuaSignal do
-	local created_lua_signals, created_lua_connections = setmetatable({}, {__mode = "k"}), setmetatable({}, {__mode = "k"});
+Help us improve PigBot Services! Contribute to our source at our public GitHub:
+https://github.com/DBReinitialized/PigBot
+]]
 
-	local function is_lua_signal( lua_signal )
-		return not not created_lua_signals[lua_signal];
-	end
-	local function is_lua_connection( lua_connection )
-		return not not created_lua_connections[lua_connection];
-	end
+local luaSignal = {}
 
-	local function lua_connection_constructor( lua_signal )
-		local self = setmetatable(
-			{
-				connected = true;
-			},
-			{
-				__tostring = function()
-					return "LuaConnection"
-				end
-			}
-		);
-		function self:disconnect()
-			if (self.connected) then
-				self.connected = false;
-				lua_signal:disconnect( self );
-			else
-				warn("Attempt to disconnect already disconnected LuaConnection")
-			end
-		end
+local dependancies = {}
+dependancies.Scheduler = require("./Scheduler")
 
-		created_lua_connections[self] = true;
-		return self;
-	end
-	local function lua_signal_constructor()
-		local self = setmetatable(
-			{},
-			{
-				__tostring = function()
-					return "LuaSignal"
-				end
-			}
-		);
-		local connections = {};
 
-		function self:connect( fn )
-			assert( type(fn) == "function", "Attempt to connect to LuaSignal with non-function (type " .. tostring(fn) .. ")" );
-			local cn = lua_connection_constructor(self);
-			connections[cn] = fn;
-			return cn;
-		end
-		function self:disconnect( cn )
-			if (connections[cn]) then
-				connections[cn] = nil;
-			else
-				warn("Attempt to disconnect " .. tostring(cn) .. ", not a valid connection")
-			end
-		end
-		function self:fire( ... )
-			local args = {...};
-			for cn, fn in pairs(connections) do
-				Scheduler.spawn(function()
-					fn( unpack(args) );
-				end)
-			end
-		end
-		function self:wait()
-			local args, cn = {}; cn = self:connect(function(...) args = {...}; cn:disconnect(); end);
-			while (cn.connected) do
-				Scheduler.wait()
-			end
-			return unpack(args);
-		end
+function luaSignal.new()
+  local this = {}
 
-		created_lua_signals[self] = true;
-		return self;
-	end
+  local connections = {}
+  local waitingThreads = {}
 
-	LuaSignal = {
-		new = lua_signal_constructor;
-		IsLuaSignal = is_lua_signal;
-		IsLuaConnection = is_lua_connection;
-	}
+
+  -- main signal api begin
+  function this:Fire(...)
+    local thread
+
+    for key = 1, #waitingThreads do
+      thread = table.remove(waitingThreads, 1)
+
+      print("resuming suspended thread ...")
+      coroutine.resume(thread, ...)
+    end
+    for connection in next, connections do
+      dependancies.Scheduler.spawn(connection._callback, ...)
+    end
+  end
+
+  this.Event = {} do
+    function this.Event:connect(callback)
+      assert(type(callback) == "function", "bad argument #1 (function expected, got ".. type(callback) ..")")
+
+      local connection = {}
+
+      connection._callback = callback
+      connection.connected = true
+
+      function connection:disconnect()
+        connections[connection] = nil
+
+        connection.connected = nil
+        connection._callback = nil
+      end
+
+      connections[connection] = true
+      return connection
+    end
+
+    function this.Event:wait()
+      table.insert(waitingThreads, coroutine.running())
+
+      return dependancies.Scheduler.wait(1e10)
+    end
+  end
+
+  function this:Destroy()
+    for key in next, connections do
+      connections[key]:disconnect()
+    end
+
+    waitingThreads = nil
+    connections = nil
+
+    this.Event.connect = nil
+    this.Event.wait = nil
+    this.Event = nil
+    this.Fire = nil
+    this.Destroy = nil
+    this = nil
+  end
+
+  return this
 end
 
-return LuaSignal;
+
+return luaSignal

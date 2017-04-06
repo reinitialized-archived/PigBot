@@ -51,12 +51,17 @@ function scheduler.delay(time, handler)
   })
 end
 
-function scheduler.spawn(handler)
+function scheduler.spawn(handler, ...)
   assert(type(handler) == "function", "bad argument #1 (function expected, got ".. type(handler) ..")")
+
+  local packedData = {...}
+  local newHandler = function()
+    return handler(unpack(packedData))
+  end
 
   scheduleTask({
     time = os.time(),
-    thread = coroutine.create(handler)
+    thread = coroutine.create(newHandler)
   })
 end
 
@@ -67,7 +72,7 @@ function scheduler.startService()
   if not (isCoroutine) or coroutine.status(schedulerThread) == "dead" then
     schedulerThread = coroutine.create(
       function()
-        local now, task
+        local now, task, status
 
         while true do
           if (schedulerStatus == "Suspended") then
@@ -78,12 +83,16 @@ function scheduler.startService()
 
           if (#queuedTasks > 0) and (queuedTasks[1].time <= now) then
             task = table.remove(queuedTasks, 1)
+            status = coroutine.status(task.thread)
 
-            coroutine.resume(task.thread)
+            if (status ~= "dead" or status ~= "running") then
+              coroutine.resume(task.thread)
+            end
           end
         end
       end
     )
+    coroutine.resume(schedulerThread, os.time())
 
   elseif coroutine.status(schedulerThread) == "suspended" then
     coroutine.resume(schedulerThread, os.time())

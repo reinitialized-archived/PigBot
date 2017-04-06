@@ -14,7 +14,19 @@ https://github.com/DBReinitialized/PigBot
 ]]
 
 local userAccountsService = {}
-PigBot.UserAccountsService = UserAccountsService/i wan
+PigBot.UserAccountsService = UserAccountsService
 
-local userDatabase = PigBot.DataService.createDatabase("UserAccountService")
-local userAccounts = userDatabase.dumpDatabase()
+local dependancies = {}
+dependancies.DataService = PigBot.DataService
+dependancies.RobloxLibraries = PigBot.RobloxLibraries
+userAccountService.dependancies = dependancies
+
+local database = PigBot.DataService.createDatabase("UserAccountService")
+local storedAccounts = {}
+
+
+-- main API
+local MemberJoinedServerSignal = dependancies.RobloxLibraries.LuaSignal.new()
+local MemberLeftServerSignal = dependancies.RobloxLibraries.LuaSignals.new()
+
+MemberJoinedServerSignal.

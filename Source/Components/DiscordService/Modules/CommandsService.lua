@@ -22,6 +22,7 @@ PigBot.DiscordService.CommandsService = commandsService
 local commands = {}
 local commandLinks = {}
 local client = PigBot.DiscordService.clients.UserBotClient
+local userAccountClient = PigBot.DiscordService.clients.UserAccountClient
 local settings = PigBot.Settings.DiscordService.CommandsService
 
 function commandsService.addCommand(name, links, guildOnly, handler)
@@ -112,6 +113,29 @@ commandsService.addCommand(
   end
 )
 
+local function sendMessageAsUser(channel, message, mentions, ...)
+  message = string.format(message, ...)
+
+  local otherChannel do
+    for guild in userAccountClient.guilds do
+      for guildChannel in guild.channels do
+        if (guildChannel.id == channel.id) then
+          otherChannel = guildChannel
+
+          break
+        end
+      end
+    end
+  end
+
+  otherChannel:sendMessage(
+    {
+      content = message,
+      mentions = mentions
+    }
+  )
+end
+
 -- temporary Commands
 commandsService.addCommand(
   "Request presence",
@@ -135,10 +159,10 @@ commandsService.addCommand(
 
     if (memberObject) then
       memberObject:sendMessage("Hey ".. memberObject.name ..", your presence is requested in #scriptbuilder at Bleu Pigs!")
-      data[3]:sendMessage("Successfully pinged ".. memberObject.name, {data[1]})
+      sendMessageAsUser(data[3], "Successfully pinged %s", {data[1]}, memberObject.name)
 
     else
-      data[3]:sendMessage("Failed to find a member matching ".. message[2], {data[1]})
+      sendMessageAsUser(data[3], "Failed to find a user matching %s", {data[1]}, message[2])
     end
   end
 )
