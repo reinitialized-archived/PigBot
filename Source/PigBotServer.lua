@@ -13,18 +13,18 @@ Help us improve PigBot Services! Contribute to our source at our public GitHub:
 https://github.com/DBReinitialized/PigBot
 ]]
 
-local PigBot = {}
-_G.PigBot = PigBot
+-- load boilerplate code
+require("./BoilerUtilities.lua"):importBoilerplateUtils()
 
--- Load Components
-require("./Settings.lua")
-require("./Components/RobloxLibraries")
-require("./Components/DataService")
-require("./Components/DiscordService")
+root = {}
 
--- Initialize Services
-PigBot.DiscordService.clients.UserBotClient:run(PigBot.Settings.DiscordService.UserBotLogin)
-PigBot.DiscordService.clients.UserAccountClient:run(PigBot.Settings.DiscordService.UserAccountLogin[1], PigBot.Settings.DiscordService.UserAccountLogin[2])
+-- until I can implement a sandbox in a later release, all developers
+-- are expected to respect the _private space
+root._private = {} do
+  local _private = root._private
 
--- Pass control to the Scheduler
-PigBot.RobloxLibraries.Scheduler.startService()
+end
+
+-- load dependencies
+requireModule("./DataService")
+requireModule("./UserAccountsService")
