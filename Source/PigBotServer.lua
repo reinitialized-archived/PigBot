@@ -14,17 +14,17 @@ https://github.com/DBReinitialized/PigBot
 ]]
 
 -- load boilerplate code
-require("./BoilerUtilities.lua"):importBoilerplateUtils()
+require("BoilerUtilities.lua"):importBoilerplateUtils()
 
+-- declare module root and dependencies
 root = {}
+dependencies = {}
 
--- until I can implement a sandbox in a later release, all developers
--- are expected to respect the _private space
-root._private = {} do
-  local _private = root._private
-
-end
-
--- load dependencies
-requireModule("./DataService")
-requireModule("./UserAccountsService")
+-- require/import dependencies
+requireModule("RobloxLibraries")
+requireModule("HttpService")
+requireModule("DataService")
+requireModule("UserAccountsService")
+requireModule("PermissionsService")
+requireModule("ApplicationService")
+requireModule("CommandsService")
