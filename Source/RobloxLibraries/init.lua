@@ -1,10 +1,12 @@
-local robloxLibraries = {}
+--[[
 
-robloxLibraries.LuaSignals = require("./LuaSignals.lua")
-robloxLibraries.Scheduler = require("./Scheduler.lua")
-robloxLibraries.SessionsManager = require("./SessionsManager.lua")
-robloxLibraries.RealEnvironment = require("./EnableRealEnvironment.lua")
+  RobloxLibraries
+  Generic Lua libraries designed to replicate various functionalities in how
+  ROBLOX Lua works
 
+]]
 
--- Load Module into PigBot core
-return robloxLibraries
+-- load boilerplate code
+require("../BoilerUtilities.lua"):importBoilerplateUtils()
+
+-- 

@@ -18,23 +18,5 @@ require("../BoilerUtilities.lua"):importBoilerplateUtils()
 
 root = {}
 
--- require dependencies
-local DataService = requireModule("./DataService")
-local RobloxLibraries = requireModule("./RobloxLibraries")
-
--- properties/variables
-local memberJoinedServerSignal = RobloxLibraries.LuaSignals.new()
-local memberLeftServerSignal = RobloxLibraries.LuaSignals.new()
-local memberDatabase = DataService.createDatabase("Member Database")
-local memberCache = {}
-
-
--- main API begin
-memberJoinedServerSignal.Event:connect(
-  function(newMember)
-
-  end
-)
-
-
-return root
+root._private = {} do
+  local _private = root._private

@@ -16,6 +16,38 @@ https://github.com/DBReinitialized/PigBot
 -- import Boilerplate Utilities
 require("../BoilerUtilities.lua"):importBoilerplateUtils()
 
+-- declare "root" table
+root = {}
+dependencies = {}
+
+-- Load modules
+requireModule()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 root = {}
 -- properties/variables
 local databases = {}

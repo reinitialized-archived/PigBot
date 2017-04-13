@@ -1,10 +1,7 @@
 -- boilerplate code used in major components
-local boilerplate = {}
+local root = {}
 
--- for the first release, im going to focus on building features. eventually,
--- ill write a sandbox of some sort.
-boilerplate._private = {}
-
+-- special local utility used for outside ROBLOXLua only
 local function convertPathToTable(path)
   local pathTable = {}
   local result
@@ -19,25 +16,34 @@ local function convertPathToTable(path)
   return result
 end
 
-function boilerplate.requireModule(modulePath)
+function root.requireDependency(modulePath)
   local requestingEnvironment = getfenv(2)
+  local dependencies = requestingEnvironment.dependencies
 
-  if (requestingEnvironment.root) then
-    local moduleName do
-      if (modulePath:sub(#modulePath - 4, #modulePath) == ".lua") then
-        moduleName = convertPathToTable(modulePath)
-      else
-        moduleName = modulePath:gmatch("(%.)%/")
-      end
-    end
+  -- verify the requesting environment has its dependencies table,
+  -- and create one if not.
+  if not (dependencies) then
+    requestingEnvironment.dependencies = {}
+    dependencies = requestingEnvironment.dependencies
 
-    requestingEnvironment.root[moduleName] = require(modulePath)
+    warn(
+    "PigBot.BoilerUtilities warning:\n\tBoilerUtilities.requireDependency could not find \"dependencies\" table for requesting environment."
+    )
+    print("traceback:", debug.traceback())
   end
 
-  return require(modulePath)
+  local moduleName
+  if (modulePath:sub(#modulePath - 4, #modulePath) == ".lua") then
+    moduleName = convertPathToTable(modulePath)
+  else
+    moduleName = modulePath:gmatch("(%.)%/")
+  end
+
+  dependencies[moduleName] = require(modulePath)
+  return dependencies[moduleName]
 end
 
-function boilerplate.importModule(modulePath)
+function root.imporDependency(modulePath)
   local requestingEnvironment = getfenv(2)
 
   for key, value in next, require(modulePath) do
@@ -45,8 +51,8 @@ function boilerplate.importModule(modulePath)
   end
 end
 
--- importBoilerplateUtils
-function boilerplate:importBoilerplateUtils()
+-- importBoilerplateUtils/s
+function root:importBoilerplateUtils()
   local requestingEnvironment = getfenv(2)
 
   for key, value in next, boilerplate do
@@ -57,4 +63,4 @@ function boilerplate:importBoilerplateUtils()
 end
 
 
-return boilerplate
+return root
