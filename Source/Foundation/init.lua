@@ -9,6 +9,11 @@
       [4142017a]
         - Removed previous PigBot source to begin work
         on Dream Foundation, the framework of PigBot.
+
+      [4142017b]
+        - Implemented _private space system
+        - Implemented basic packaging system
+        - Implemented protected Global access
 ]]
 
 local foundation = {}
