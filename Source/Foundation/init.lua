@@ -38,7 +38,9 @@ foundation._private = {} do
 
       end
 
-      luaPlatform = luaPlatform .. runService:IsStudio() and " Studio"
+      if (runService:IsStudio()) then
+        luaPlatform = luaPlatform .." Studio"
+  	  end
       runService = nil
     else
       luaPlatform = _VERSION
@@ -131,10 +133,10 @@ local foundationGlobalAccess = {} do
   }
   setmetatable(foundationGlobalAccess, metatable)
 
-  _G.foundation = foundationGlobalAccess
+  _G.foundations = foundationGlobalAccess
 end
 
-print("Foundation has successfully initialized")
+print("Foundation ".. foundation._private.luaPlatform .." has successfully initialized")
 
 -- roblox module compatibility
 if (foundation._private.luaPlatform:sub(1, 3) == "RBX") then

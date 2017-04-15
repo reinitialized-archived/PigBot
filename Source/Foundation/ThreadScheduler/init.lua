@@ -1,6 +1,6 @@
 --[[
   Dream Foundations
-  Foundation/ThreadScheduler/init.lua ver 0.1.0 indev
+  Foundations/ThreadScheduler/init.lua ver 0.1.0 indev
   Main script for loading the ROBLOX-like ThreadScheduler package
 
   Changelog:
@@ -8,11 +8,7 @@
       - Initial setup of code
 ]]
 
-local foundation do
-  local accessKey = "GVp6kjhNUK"
-
-  foundation = _G.foundation(accessKey)
-end
+local foundation = _G.foundations("GVp6kjhNUK")
 
 local threadScheduler = {}
 local _private = foundation._private.internals.getPrivateSpace("threadScheduler")
@@ -55,12 +51,14 @@ function threadScheduler.suspend(totalTime)
   return coroutine.yield()
 end
 
-function threadScheduler.spawn(callback)
+function threadScheduler.spawn(callback, ...)
   assert(type(callback) == "function", "bad argument #1 (function expected, got ".. type(callback) ..")")
+
+  local packed = {...}
 
   _private.internals.scheduleTask(
     {
-      thread = coroutine.create(callback),
+      thread = coroutine.create(callback, unpack(packed)),
       resumeAt = os.time(),
       priority = 1
     }
@@ -77,6 +75,11 @@ function threadScheduler:startScheduler()
     schedulerThread = coroutine.create(
       function()
         local luaPlatform, now, removedThread = foundation._private.luaPlatform:sub(1, 3), os.time()
+        local runService do
+          if (luaPlatform == "RBX") then
+            runService = game:GetService("RunService")
+          end
+        end
 
         while true do
           if (not _private.schedulerRunning) then
@@ -84,7 +87,6 @@ function threadScheduler:startScheduler()
           end
 
           now = os.time()
-
           if (#_private.queuedTasks > 0 and (now >= _private.queuedTasks[1].resumeAt)) then
             removedThread = table.remove(_private.queuedTasks, 1)
 
@@ -92,7 +94,7 @@ function threadScheduler:startScheduler()
           end
 
           if (luaPlatform == "RBX") then
-            coroutine.yield()
+            runService.Stepped:wait()
           end
         end
 
@@ -100,7 +102,7 @@ function threadScheduler:startScheduler()
       end
     )
 
-    _private.schedulerThread = thread
+    _private.schedulerThread = schedulerThread
     status = coroutine.status(schedulerThread)
   end
 
@@ -108,8 +110,7 @@ function threadScheduler:startScheduler()
     print("foundation.threadScheduler:startScheduler() INFO: scheduler is now starting")
 
     _private.schedulerRunning = true
-
-    coroutine.resume(schedulerThread)
+    print(coroutine.resume(schedulerThread))
   else
     error("foundation.threadScheduler:startScheduler() FATAL: cannot resume not suspended scheduler!", 2)
 
