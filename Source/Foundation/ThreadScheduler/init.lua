@@ -25,11 +25,11 @@ function _private.internals.scheduleTask(taskData)
   table.sort(
     _private.queuedTasks,
     function(taskA, taskB)
-      if (taskA.priority >= taskB.priority) then
+      if (taskA.priority < taskB.priority) then
         return true
 
       else
-        return taskA.resumeAt >= taskB.resumeTime
+        return taskA.resumeAt < taskB.resumeAt
 
       end
     end
@@ -54,13 +54,12 @@ end
 function threadScheduler.spawn(callback, ...)
   assert(type(callback) == "function", "bad argument #1 (function expected, got ".. type(callback) ..")")
 
-  local packed = {...}
-
   _private.internals.scheduleTask(
     {
-      thread = coroutine.create(callback, unpack(packed)),
+      thread = coroutine.create(callback),
       resumeAt = os.time(),
-      priority = 1
+      priority = 1,
+      packed = ...
     }
   )
 end
@@ -86,11 +85,22 @@ function threadScheduler:startScheduler()
             coroutine.yield()
           end
 
-          now = os.time()
-          if (#_private.queuedTasks > 0 and (now >= _private.queuedTasks[1].resumeAt)) then
-            removedThread = table.remove(_private.queuedTasks, 1)
+          -- print(#_private.queuedTasks, _private.runningScheduler, now, _private.queuedTasks[1].resumeAt, _private.queuedTasks[1].priority, math.random())
 
-            coroutine.resume(removedThread.thread)
+          now = os.time()
+          if (#_private.queuedTasks > 0) then
+            if (_private.queuedTasks[1].resumeAt <= now) then
+              removedThread = table.remove(_private.queuedTasks, 1)
+
+              local ran, errorMsg = coroutine.resume(removedThread.thread, removedThread.packed)
+              if not (ran) then
+                error("\n\n--[[\n\tfoundations.threadScheduler._private.schedulerThread FATAL:\n\tmanaged thread ran into a fatal error!\n\n".. errorMsg .."\n\n--]]\n\n")
+              end
+            end
+          -- else
+          --   for key, value in next, _private.queuedTasks do
+          --     print(key, value, value.priority, value.resumeAt)
+          --   end
           end
 
           if (luaPlatform == "RBX") then
@@ -98,7 +108,7 @@ function threadScheduler:startScheduler()
           end
         end
 
-        print("foundation.threadScheduler._private.schedulerThread FATAL: scheduler has ended")
+        print("foundation.threadScheduler._private.schedulerThread FATAL:scheduler has ended")
       end
     )
 

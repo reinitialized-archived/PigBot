@@ -10,13 +10,13 @@
 
 ]]
 
-local foundation = _G.foundation("GVp6kjhNUK")
+local foundations = _G.foundations("GVp6kjhNUK")
 
 local luaSignals = {}
-local _private = foundation._private.internals.getPrivateSpace("luaSignals")
+local _private = foundations._private.internals.getPrivateSpace("luaSignals")
 
 -- localize dependencies
-local threadScheduler = _private.threadScheduler
+local threadScheduler = foundations.threadScheduler
 
 _private.signals = setmetatable({}, {_mode = "k"})
 
@@ -26,15 +26,20 @@ function luaSignals.createSignal()
   luaSignal._connections = setmetatable({}, {__mode = "k"})
   luaSignal._waitingThreads = {}
 
-  function luaSignal:fire(...)
-    for _ = 1, #luaSignal._waitngThreads do
-      local removedThread = table.remove(luaSignal, 1)
-
-      coroutine.resume(removedThread, ...)
+  function luaSignal.fire(self, ...)
+    print(debug.traceback())
+    print(self, 'running')
+    for key = 1, #luaSignal._waitingThreads do
+      print(key)
+      coroutine.resume(luaSignal._waitingThreads[key], ...)
     end
     for connection in next, luaSignal._connections do
-      threadScheduler.spawn(connection.__callback, ...)
+      print(connection, "b")
+      threadScheduler.spawn(connection._callback, ...)
     end
+
+    luaSignal._waitingThreads = {}
+    print'done'
   end
 
   function luaSignal:destroy()
@@ -63,13 +68,13 @@ function luaSignals.createSignal()
 
       local connection = {}
 
-      connection.__callback = callback
+      connection._callback = callback
       connection.connected = true
 
       function connection:disconnect()
         assert(self == connection, "this function must be called using \":\" on its originating table")
 
-        luaSignal.__connections[connection] = nil
+        luaSignal._connections[connection] = nil
         connection.connected = false
       end
 
@@ -79,18 +84,18 @@ function luaSignals.createSignal()
         connection:disconnect()
 
         connection.connected = nil
-        connection.__callback = nil
+        connection._callback = nil
         connection = nil
       end
 
-      luaSignal.__connection[connection] = true
+      luaSignal._connections[connection] = true
       return connection
     end
 
     function event:wait()
       assert(self == event, "this function must be called using \":\" on its originating table")
 
-      table.insert(luaSignal._waitingThreads, coroutine.running())
+      luaSignal._waitingThreads[#luaSignal._waitingThreads + 1] = coroutine.running()
       return threadScheduler.suspend(1e10)
     end
   end
@@ -100,3 +105,7 @@ function luaSignals.createSignal()
 end
 
 foundations.luaSignals = luaSignals
+
+if (foundations._private.luaPlatform:sub(1, 3) == "RBX") then
+  return true
+end
