@@ -100,23 +100,11 @@ foundation.dependency = {} do
       end
     end
 
-    foundation[packageName] = require(package)
+    local results = require(package)
 
     if (returnResults) then
-      return foundation[packageName]
+      return results
     end
-  end
-
-  function dependency.getPackage(packageName)
-    assert(type(packageName) == "string", "bad argument #1 (string expected, got ".. type(packageName) ..")")
-
-    local package = foundation[packageName]
-    if not (package) then
-      package = dependency.loadPackage(packageName, true)
-
-    end
-
-    return package
   end
 end
 
@@ -144,18 +132,7 @@ local foundationGlobalAccess = {} do
   }
   setmetatable(foundationGlobalAccess, metatable)
 
-  -- Because of how ROBLOX works, we have to use a little exploit to gain access
-  -- to the Lua thread's main environment. It's unforunate, but necessary.
-  if (foundation._private.luaPlatform:sub(1, 3) == "RBX") then
-    local getRealThreadEnvironment = foundation.dependency.getPackage("getRealThreadEnvironment")
-
-    getRealThreadEnvironment().foundation = foundationGlobalAccess
-
-  else
-    -- otherwise, we can just use _G lol
-    _G.foundation = foundationGlobalAccess
-
-  end
+  _G.foundation = foundationGlobalAccess
 end
 
 print("Foundation has successfully initialized")
