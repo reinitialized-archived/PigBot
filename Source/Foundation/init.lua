@@ -1,6 +1,6 @@
 --[[
 
-    Dream Foundation
+    Dream Foundations
     init.lua ver 0.1.0 indev
     Main script for Dream Foundations.
 
@@ -108,7 +108,6 @@ foundation.dependency = {} do
   end
 end
 
-
 -- table used to access the "foundation" table.
 local foundationGlobalAccess = {} do
   local accessKey = "GVp6kjhNUK"
@@ -136,3 +135,8 @@ local foundationGlobalAccess = {} do
 end
 
 print("Foundation has successfully initialized")
+
+-- roblox module compatibility
+if (foundation._private.luaPlatform:sub(1, 3) == "RBX") then
+  return true
+end
